@@ -5,22 +5,24 @@ function slider({
   slider__button__prev,
   slidesToShow = 1,
   responsive = false,
-  slidesToScroll = 1
+  slidesToScroll = 1,
+  dots = true
 }) {
 
   let slider_item = document.querySelectorAll(slider__item),
     slider_transitionx = document.querySelector(slider__translateX),
     slider_button_next = document.querySelector(slider__button__next),
     slider_button_prev = document.querySelector(slider__button__prev),
-    temp = 0,
-    startX = 0,
-    endX = 0,
-    slidesToShowOriginal = slidesToShow;
+    slidesToShowOriginal = slidesToShow,
+    slidesToScrollOriginal = slidesToScroll,
+    temp = 0;
+
+  // Create slides-wrapper
 
   if (slider_transitionx) {
-    let DOCUMENT_SLIDER_WIDTH = document.documentElement.clientWidth,
-      INNER_SLIDE_WIDTH = document.querySelector(".products-slider__inner").offsetWidth,
-      slide_width = INNER_SLIDE_WIDTH / slidesToShow,
+    let documentWidth = document.documentElement.clientWidth,
+      innerSliderWidth = slider_transitionx.parentElement.offsetWidth,
+      slide_width = innerSliderWidth / slidesToShow,
       slider_container_array = [];
 
     for (let i = 0; i < slider_item.length; i++) {
@@ -39,74 +41,141 @@ function slider({
     slider_transitionx.style.width = slider_item.length * slide_width + "px";
 
 
-    //responsive
+    // Responsive
+
+    function adaptive(slidesScroll, slidesShow) {
+      slidesToScrollOriginal = slidesScroll || slidesToScroll;
+      let SLIDES = document.querySelectorAll(`${slider__translateX}>.slide-container`),
+        innerSliderWidth = slider_transitionx.parentElement.offsetWidth;
+      SLIDES.forEach(element => {
+        element.style.width = (innerSliderWidth / slidesShow) + "px";
+      });
+      slider_transitionx.style.width = slider_item.length * parseInt(SLIDES[0].style.width) + "px";
+      slidesToShowOriginal = slidesShow;
+      slidesToScrollOriginal = slidesScroll;
+    }
+
+    if (dots) {
+      createDots();
+      dotClick(0);
+    }
 
     if (responsive) {
+      if (dots) setDots();
       let biggestBreakPoint = 0;
       slider_transitionx.style.transform = `translateX(-0px)`;
+
       responsive.forEach(element => {
-        if (DOCUMENT_SLIDER_WIDTH < element.breakPoint) {
-          adaptive(element.slidesToShow);
+        if (documentWidth < element.breakPoint) {
+          adaptive(element.slidesToScroll, element.slidesToShow);
+          setDots();
         }
       });
       window.addEventListener(`resize`, () => {
         slider_transitionx.style.transform = `translateX(-0px)`;
-        DOCUMENT_SLIDER_WIDTH = document.documentElement.clientWidth;
+        dotClick(0);
+        documentWidth = document.documentElement.clientWidth;
         responsive.forEach(element => {
-          if (DOCUMENT_SLIDER_WIDTH < element.breakPoint) {
-            adaptive(element.slidesToShow);
+          if (documentWidth < element.breakPoint) {
+            adaptive(element.slidesToScroll, element.slidesToShow);
+            setDots();
           }
           if (element.breakPoint > biggestBreakPoint) biggestBreakPoint = element.breakPoint;
         });
-        if (DOCUMENT_SLIDER_WIDTH > biggestBreakPoint) {
-          adaptive(slidesToShow);
+        if (documentWidth > biggestBreakPoint) {
+          adaptive(slidesToScroll, slidesToShow);
+          setDots();
         }
       });
     } else {
       window.addEventListener(`resize`, () => {
         slider_transitionx.style.transform = `translateX(-0px)`;
-        DOCUMENT_SLIDER_WIDTH = document.documentElement.clientWidth;
-        adaptive(slidesToShow);
+        documentWidth = document.documentElement.clientWidth;
+        adaptive(slidesToScroll, slidesToShow);
+        setDots();
       });
     }
 
-    function adaptive(slidesShow) {
-      let SLIDES = document.querySelectorAll(`${slider__translateX}>.slide-container`),
-        INNER_SLIDE_WIDTH = document.querySelector(".products-slider__inner").offsetWidth;
-      SLIDES.forEach(element => {
-        element.style.width = (INNER_SLIDE_WIDTH / slidesShow) + "px";
-      });
-      slider_transitionx.style.width = slider_item.length * parseInt(SLIDES[0].style.width) + "px";
-      slidesToShowOriginal = slidesShow;
+    // Dots
+
+    function createDots() {
+      let dots_number = Math.ceil((slider_item.length - slidesToShowOriginal) / slidesToScrollOriginal) + 1,
+        dots_container = document.createElement("ul");
+      dots_container.classList.add("slider__dots-list");
+      slider_transitionx.parentElement.append(dots_container);
+      for (let i = 0; i < dots_number; i++) {
+        let dot = document.createElement("li"),
+          dot_button = document.createElement("button");
+        dot.classList.add("slider__dot");
+        dot_button.classList.add("slider__dot-button");
+        dot_button.innerHTML = `${i}`;
+        dot.append(dot_button);
+        dots_container.append(dot);
+        dot.addEventListener("click", function () {
+          dotClick(i);
+          scrollSlide(i);
+        });
+      }
+    }
+
+    function clearDots() {
+      document.querySelector(`.slider__dots-list`).remove();
+    }
+
+    function dotClick(target) {
+      dots = document.querySelectorAll(".slider__dot-button");
+      for (let j = 0; j < dots.length; j++) {
+        if (dots[j] == dots[target]) dots[j].classList.add("slider__dot-button--active");
+        else dots[j].classList.remove("slider__dot-button--active");
+      }
+      temp = target;
+    }
+
+    function setDots() {
+      if (dots) {
+        clearDots();
+        createDots();
+        dotClick(0);
+      }
     }
 
     // Slide Scroll
 
     function scrollSlide(numberOfSlide) {
-      let maxNextButtonClickCounter = Math.ceil((slider_item.length - slidesToShowOriginal) / slidesToScroll);
-      if (slider_item.length <= slidesToScroll) slidesToScroll = 0;
+      let maxNextButtonClickCounter = Math.ceil((slider_item.length - slidesToShowOriginal) / slidesToScrollOriginal);
+      if (slider_item.length <= slidesToScrollOriginal) slidesToScrollOriginal = 0;
       if (numberOfSlide > maxNextButtonClickCounter) numberOfSlide = temp = 0;
       else if (numberOfSlide < 0) numberOfSlide = temp = maxNextButtonClickCounter;
-      slider_transitionx.style.transform = `translateX(-${ (((parseInt(slider_transitionx.style.width) / slider_item.length) * numberOfSlide)) * slidesToScroll}px)`;
+      slider_transitionx.style.transform = `translateX(-${ (((parseInt(slider_transitionx.style.width) / slider_item.length) * numberOfSlide)) * slidesToScrollOriginal}px)`;
     }
     scrollSlide(temp);
 
-    slider_button_next.addEventListener("click", () => {
-      scrollSlide(++temp);
-    });
-
-    slider_button_prev.addEventListener("click", () => {
-      scrollSlide(--temp);
-    });
+    if (slider__button__next) {
+      slider_button_next.addEventListener("click", () => {
+        scrollSlide(++temp);
+        dotClick(temp);
+      });
+    }
+    if (slider__button__prev) {
+      slider_button_prev.addEventListener("click", () => {
+        scrollSlide(--temp);
+        dotClick(temp);
+      });
+    }
 
     // Swipes
+
+    let startX = 0,
+      endX = 0;
 
     function scrollSlideOnTouch() {
       if (endX > startX + 70) {
         scrollSlide(--temp);
+        dotClick(temp);
       }
       if (endX < startX - 70) {
         scrollSlide(++temp);
+        dotClick(temp);
       }
     }
 
