@@ -1,16 +1,17 @@
 function slider({
   slider__item,
-  slider__translateX,
   slider__button__next,
   slider__button__prev,
   slidesToShow = 1,
   responsive = false,
   slidesToScroll = 1,
-  dots = true
+  dots = true,
+  speed = 700,
+  fade = false
 }) {
 
   let slider_item = document.querySelectorAll(slider__item),
-    slider_transitionx = document.querySelector(slider__translateX),
+    slider_translatex = document.createElement("div"),
     slider_button_next = document.querySelector(slider__button__next),
     slider_button_prev = document.querySelector(slider__button__prev),
     slidesToShowOriginal = slidesToShow,
@@ -19,9 +20,13 @@ function slider({
 
   // Create slides-wrapper
 
-  if (slider_transitionx) {
+  if (slider_item[0]) {
+    slider_translatex.classList.add("slider__translatex");
+    slider_translatex.style.display = "flex";
+    if (!fade) slider_translatex.style.transition = `transform ${speed/1000}s`;
     let documentWidth = document.documentElement.clientWidth,
-      innerSliderWidth = slider_transitionx.parentElement.offsetWidth,
+      parent = slider_item[0].parentElement,
+      innerSliderWidth = slider_item[0].parentElement.offsetWidth,
       slide_width = innerSliderWidth / slidesToShow,
       slider_container_array = [];
 
@@ -33,24 +38,24 @@ function slider({
       slide_container.append(slide_container_content);
       slider_container_array.push(slide_container);
     }
-    slider_transitionx.innerHTML = "";
+    parent.innerHTML = "";
     slider_container_array.forEach(element => {
-      slider_transitionx.append(element);
+      slider_translatex.append(element);
     });
 
-    slider_transitionx.style.width = slider_item.length * slide_width + "px";
-
+    slider_translatex.style.width = slider_item.length * slide_width + "px";
+    parent.append(slider_translatex);
 
     // Responsive
 
     function adaptive(slidesScroll, slidesShow) {
       slidesToScrollOriginal = slidesScroll || slidesToScroll;
-      let SLIDES = document.querySelectorAll(`${slider__translateX}>.slide-container`),
-        innerSliderWidth = slider_transitionx.parentElement.offsetWidth;
-      SLIDES.forEach(element => {
+      let slides = document.querySelectorAll(`.${parent.classList.value} .slide-container`),
+        innerSliderWidth = slider_translatex.parentElement.offsetWidth;
+      slides.forEach(element => {
         element.style.width = (innerSliderWidth / slidesShow) + "px";
       });
-      slider_transitionx.style.width = slider_item.length * parseInt(SLIDES[0].style.width) + "px";
+      slider_translatex.style.width = slider_item.length * parseInt(slides[0].style.width) + "px";
       slidesToShowOriginal = slidesShow;
       slidesToScrollOriginal = slidesScroll;
     }
@@ -63,7 +68,7 @@ function slider({
     if (responsive) {
       if (dots) setDots();
       let biggestBreakPoint = 0;
-      slider_transitionx.style.transform = `translateX(-0px)`;
+      slider_translatex.style.transform = `translateX(-0px)`;
 
       responsive.forEach(element => {
         if (documentWidth < element.breakPoint) {
@@ -71,8 +76,9 @@ function slider({
           setDots();
         }
       });
+
       window.addEventListener(`resize`, () => {
-        slider_transitionx.style.transform = `translateX(-0px)`;
+        slider_translatex.style.transform = `translateX(-0px)`;
         dotClick(0);
         documentWidth = document.documentElement.clientWidth;
         responsive.forEach(element => {
@@ -87,13 +93,6 @@ function slider({
           setDots();
         }
       });
-    } else {
-      window.addEventListener(`resize`, () => {
-        slider_transitionx.style.transform = `translateX(-0px)`;
-        documentWidth = document.documentElement.clientWidth;
-        adaptive(slidesToScroll, slidesToShow);
-        setDots();
-      });
     }
 
     // Dots
@@ -102,7 +101,7 @@ function slider({
       let dots_number = Math.ceil((slider_item.length - slidesToShowOriginal) / slidesToScrollOriginal) + 1,
         dots_container = document.createElement("ul");
       dots_container.classList.add("slider__dots-list");
-      slider_transitionx.parentElement.append(dots_container);
+      parent.append(dots_container);
       for (let i = 0; i < dots_number; i++) {
         let dot = document.createElement("li"),
           dot_button = document.createElement("button");
@@ -119,7 +118,7 @@ function slider({
     }
 
     function clearDots() {
-      document.querySelector(`.slider__dots-list`).remove();
+      document.querySelector(".slider__dots-list").remove();
     }
 
     function dotClick(target) {
@@ -146,9 +145,36 @@ function slider({
       if (slider_item.length <= slidesToScrollOriginal) slidesToScrollOriginal = 0;
       if (numberOfSlide > maxNextButtonClickCounter) numberOfSlide = temp = 0;
       else if (numberOfSlide < 0) numberOfSlide = temp = maxNextButtonClickCounter;
-      slider_transitionx.style.transform = `translateX(-${ (((parseInt(slider_transitionx.style.width) / slider_item.length) * numberOfSlide)) * slidesToScrollOriginal}px)`;
+      if (fade == true) {
+        let animateID,
+          slider_item = document.querySelectorAll(slider__item),
+          durationProcent = speed / 100,
+          lastTime = performance.now();
+        slider_item.forEach(element => {
+          element.style.transition = `all ${speed/1000}s ease`;
+        });
+
+        function animation() {
+          let currentTime = performance.now();
+          if (currentTime - lastTime >= 0) {
+            slider_item.forEach(element => {
+              element.style.opacity = 0;
+            });
+          }
+          if (currentTime - lastTime >= durationProcent * 100) {
+            slider_item.forEach(element => {
+              slider_translatex.style.transform = `translateX(-${ (((parseInt(slider_translatex.style.width) / slider_item.length) * numberOfSlide)) * slidesToScrollOriginal}px)`;
+              element.style.opacity = 1;
+            });
+            animateID = cancelAnimationFrame(animation);
+          }
+          if (currentTime - lastTime < durationProcent * 100) animateID = requestAnimationFrame(animation);
+        }
+        animateID = requestAnimationFrame(animation);
+      } else {
+        slider_translatex.style.transform = `translateX(-${ (((parseInt(slider_translatex.style.width) / slider_item.length) * numberOfSlide)) * slidesToScrollOriginal}px)`;
+      }
     }
-    scrollSlide(temp);
 
     if (slider__button__next) {
       slider_button_next.addEventListener("click", () => {
@@ -179,20 +205,20 @@ function slider({
       }
     }
 
-    slider_transitionx.addEventListener("mousedown", (event) => {
+    slider_translatex.addEventListener("mousedown", (event) => {
       startX = event.screenX;
     });
 
-    slider_transitionx.addEventListener("mouseup", (event) => {
+    slider_translatex.addEventListener("mouseup", (event) => {
       endX = event.screenX;
       scrollSlideOnTouch();
     });
 
-    slider_transitionx.addEventListener("touchstart", (event) => {
+    slider_translatex.addEventListener("touchstart", (event) => {
       startX = event.touches[0].clientX;
     });
 
-    slider_transitionx.addEventListener("touchend", (event) => {
+    slider_translatex.addEventListener("touchend", (event) => {
       endX = event.changedTouches[0].clientX;
       scrollSlideOnTouch();
     });
@@ -209,6 +235,9 @@ export default slider;
 //   slider__button__next: ".button-next",
 //   slider__button__prev: ".button-prev",
 //   slidesToShow: 3,
+//   speed: 1000,
+//   fade: true,
+//   dots: false,
 //   responsive: [{
 //       breakPoint: 1160,
 //       slidesToShow: 2
