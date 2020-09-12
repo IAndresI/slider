@@ -69,7 +69,7 @@ function slider({
     if (responsive) {
       setDots();
       let biggestBreakPoint = 0;
-      scrollSlide(temp);
+      slider_translatex.style.transform = `translateX(-${ (((parseInt(slider_translatex.style.width) / slider_item.length) * temp)) * slidesToScrollOriginal}px)`;
 
       responsive.forEach(element => {
         if (documentWidth < element.breakPoint) {
@@ -88,13 +88,13 @@ function slider({
         if (documentWidth > biggestBreakPoint) {
           adaptive(slidesToScroll, slidesToShow);
         }
-        scrollSlide(temp);
+        slider_translatex.style.transform = `translateX(-${ (((parseInt(slider_translatex.style.width) / slider_item.length) * temp)) * slidesToScrollOriginal}px)`;
       });
     } else {
       setDots();
       window.addEventListener(`resize`, () => {
         adaptive(slidesToScroll, slidesToShow);
-        scrollSlide(temp);
+        slider_translatex.style.transform = `translateX(-${ (((parseInt(slider_translatex.style.width) / slider_item.length) * temp)) * slidesToScrollOriginal}px)`;
       });
     }
 
