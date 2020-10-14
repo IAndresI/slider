@@ -1,7 +1,7 @@
 function slider({
-  slider__item,
-  slider__button__next,
-  slider__button__prev,
+  sliderItem,
+  sliderButtonNext,
+  sliderButtonPrev,
   slidesToShow = 1,
   responsive = false,
   slidesToScroll = 1,
@@ -10,10 +10,10 @@ function slider({
   fade = false
 }) {
 
-  let slider_item = document.querySelectorAll(slider__item),
+  let slider_item = document.querySelectorAll(sliderItem),
     slider_translatex = document.createElement("div"),
-    slider_button_next = document.querySelector(slider__button__next),
-    slider_button_prev = document.querySelector(slider__button__prev),
+    slider_button_next = document.querySelector(sliderButtonNext),
+    slider_button_prev = document.querySelector(sliderButtonPrev),
     slidesToShowOriginal = slidesToShow,
     slidesToScrollOriginal = slidesToScroll,
     temp = 0;
@@ -48,7 +48,7 @@ function slider({
 
     // Responsive
 
-    function adaptive(slidesScroll, slidesShow) {
+    function adaptive(slidesScroll = slidesToScrollOriginal, slidesShow = slidesToShowOriginal) {
       slidesToScrollOriginal = slidesScroll || slidesToScroll;
       let slides = document.querySelectorAll(`.${slider_translatex.parentElement.getAttribute("class").replace(/ /g,".")} .slide-container`),
         innerSliderWidth = slider_translatex.parentElement.offsetWidth;
@@ -151,7 +151,7 @@ function slider({
       if (dots) dotClick(numberOfSlide);
       if (fade == true) {
         let animateID,
-          slider_item = document.querySelectorAll(slider__item),
+          slider_item = document.querySelectorAll(sliderItem),
           durationProcent = speed / 100,
           lastTime = performance.now();
         slider_item.forEach(element => {
@@ -180,12 +180,12 @@ function slider({
       }
     }
 
-    if (slider__button__next) {
+    if (sliderButtonNext) {
       slider_button_next.addEventListener("click", () => {
         scrollSlide(++temp);
       });
     }
-    if (slider__button__prev) {
+    if (sliderButtonPrev) {
       slider_button_prev.addEventListener("click", () => {
         scrollSlide(--temp);
       });
