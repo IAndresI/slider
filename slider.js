@@ -38,7 +38,9 @@ function slider({
       slide_container.append(slide_container_content);
       slider_container_array.push(slide_container);
     }
-    parent.innerHTML = "";
+    slider_item.forEach(element => {
+      element.remove();
+    });
     slider_container_array.forEach(element => {
       slider_translatex.append(element);
     });
